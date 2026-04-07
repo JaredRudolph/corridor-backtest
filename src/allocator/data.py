@@ -41,7 +41,15 @@ def fetch_prices(
     prices = prices.dropna(how="any")
 
     logger.info(
-        f"Fetched {len(prices)} trading days ({prices.index[0].date()} to {prices.index[-1].date()})"  # noqa
+        f"Fetched {len(prices)} trading days ({prices.index[0].date()} "
+        f"to {prices.index[-1].date()})"
     )
 
     return prices
+
+
+if __name__ == "__main__":
+    prices = fetch_prices(["SPY", "TLT", "GLD", "QQQ"], "2015-01-01")
+    print(prices.head())
+    print(f"\nShape: {prices.shape}")
+    print(f"Tickers: {prices.columns.tolist()}")
