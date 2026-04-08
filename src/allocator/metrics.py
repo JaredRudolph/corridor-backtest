@@ -125,6 +125,12 @@ def summarize(
         - total_contributions,
     }
 
+    weight_cols = [c for c in results.columns if c.endswith("_weight")]
+    final_row = results.iloc[-1]
+    for col in weight_cols:
+        ticker = col.replace("_weight", "")
+        summary[f"{ticker}_final_weight"] = float(final_row[col])
+
     if benchmark is not None:
         benchmark = benchmark.reindex(pv.index).dropna()
         summary["benchmark_cagr"] = cagr(benchmark)
