@@ -87,7 +87,8 @@ def summarize(
     """Compute all performance metrics for a single portfolio backtest.
 
     Args:
-        results: Date-indexed DataFrame from run_backtest, must contain 'portfolio_value'.
+        results: Date-indexed DataFrame from run_backtest, must contain
+            'portfolio_value'.
         rebalance_log: DataFrame of rebalance events from run_backtest.
         config: The portfolio config dict.
         benchmark: Optional date-indexed price series for the benchmark ticker.
@@ -112,12 +113,16 @@ def summarize(
         "calmar": calmar(pv),
         "max_drawdown": max_drawdown(pv),
         "rebalance_count": rebalance_count,
-        "rebalance_freq_per_year": rebalance_count / years if years > 0 else float("nan"),
+        "rebalance_freq_per_year": rebalance_count / years
+        if years > 0
+        else float("nan"),
         "initial_capital": config["initial_capital"],
         "total_contributions": total_contributions,
         "total_invested": config["initial_capital"] + total_contributions,
         "final_value": float(pv.iloc[-1]),
-        "total_growth": float(pv.iloc[-1]) - config["initial_capital"] - total_contributions,
+        "total_growth": float(pv.iloc[-1])
+        - config["initial_capital"]
+        - total_contributions,
     }
 
     if benchmark is not None:
@@ -128,7 +133,9 @@ def summarize(
     return summary
 
 
-def _total_contributions(index: pd.DatetimeIndex, contribution_cfg: dict | None) -> float:
+def _total_contributions(
+    index: pd.DatetimeIndex, contribution_cfg: dict | None
+) -> float:
     """Estimate total cash contributed over the backtest period.
 
     Args:
