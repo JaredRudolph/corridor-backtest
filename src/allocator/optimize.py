@@ -18,7 +18,7 @@ def compute_weights(
         objective: One of 'max_sharpe', 'min_vol', or 'equal_weight'.
         risk_free_rate: Annualized risk-free rate used in Sharpe calculation.
         bounds: Per-asset (min, max) weight bounds passed to the optimizer.
-            Defaults to long-only (0, 1) for each asset when None.
+            When None, long-only with no upper cap is assumed.
 
     Returns:
         1-D array of weights aligned to returns.columns order, summing to 1.
@@ -35,37 +35,47 @@ def compute_weights(
     mean_returns = window.mean()
     cov = window.cov()
 
-    resolved_bounds = bounds if bounds is not None else [(0.0, 1.0)] * n
     w0 = np.full(n, 1.0 / n)
 
     if objective == "max_sharpe":
-        # Sharpe ratio trick: fix w @ (mu - rf) = 1, minimize variance.
-        # This converts the fractional Sharpe objective into a pure quadratic,
-        # which is better conditioned than minimizing -Sharpe directly.
-        # After solving, normalize y to sum to 1 to recover true weights.
         excess = (mean_returns - risk_free_rate / 252).values
 
-        def portfolio_variance(y):
-            return y @ cov.values @ y
+        if bounds is None:
+            # Sharpe ratio trick: fix w @ (mu - rf) = 1, minimize variance.
+            # This converts the fractional Sharpe objective into a pure quadratic,
+            # which is better conditioned than minimizing -Sharpe directly.
+            # y is an auxiliary variable; normalize y / y.sum() to recover weights.
+            # Requires unconstrained upside on y -- do not apply weight bounds here.
+            def portfolio_variance(y):
+                return y @ cov.values @ y
 
-        sharpe_constraints = [
-            {"type": "eq", "fun": lambda y: np.dot(y, excess) - 1.0},
-        ]
+            result = minimize(
+                portfolio_variance,
+                w0,
+                method="SLSQP",
+                bounds=[(0.0, None)] * n,
+                constraints=[{"type": "eq", "fun": lambda y: np.dot(y, excess) - 1.0}],
+            )
+            result.x = result.x / result.x.sum()
+        else:
+            # Sharpe trick breaks with per-asset bounds since y != w.
+            # Minimize -Sharpe directly with the actual weight bounds instead.
+            def neg_sharpe(w):
+                port_return = np.dot(w, mean_returns) * 252
+                port_vol = np.sqrt(w @ cov.values @ w * 252)
+                return -(port_return - risk_free_rate) / port_vol
 
-        result = minimize(
-            portfolio_variance,
-            w0,
-            method="SLSQP",
-            bounds=resolved_bounds,
-            constraints=sharpe_constraints,
-        )
-        result.x = result.x / result.x.sum()
+            result = minimize(
+                neg_sharpe,
+                w0,
+                method="SLSQP",
+                bounds=bounds,
+                constraints=[{"type": "eq", "fun": lambda w: w.sum() - 1.0}],
+            )
 
     elif objective == "min_vol":
         if bounds is not None:
             # Closed-form does not support bounds -- fall back to SLSQP.
-            constraints = [{"type": "eq", "fun": lambda w: w.sum() - 1.0}]
-
             def portfolio_variance(w):
                 return w @ cov.values @ w
 
@@ -73,8 +83,8 @@ def compute_weights(
                 portfolio_variance,
                 w0,
                 method="SLSQP",
-                bounds=resolved_bounds,
-                constraints=constraints,
+                bounds=bounds,
+                constraints=[{"type": "eq", "fun": lambda w: w.sum() - 1.0}],
             )
         else:
             # Closed-form minimum variance: w* = Sigma^-1 @ 1 / (1^T @ Sigma^-1 @ 1)
