@@ -113,7 +113,9 @@ def plot_equity_curves(
     if color_map is None:
         color_map = _build_color_map(names)
 
-    final_values = {e["name"]: e["results"]["portfolio_value"].iloc[-1] for e in portfolio_data}
+    final_values = {
+        e["name"]: e["results"]["portfolio_value"].iloc[-1] for e in portfolio_data
+    }
     top3 = set(sorted(final_values, key=final_values.get, reverse=True)[:3])
 
     for entry in portfolio_data:
@@ -126,10 +128,24 @@ def plot_equity_curves(
         alpha = 1.0 if is_top else 0.35
         zorder = 3 if is_top else 2
 
-        ax_nom.plot(pv.index, pv.values, color=color, linewidth=lw,
-                    alpha=alpha, label=name, zorder=zorder)
-        ax_log.plot(pv.index, pv / start_val, color=color, linewidth=lw,
-                    alpha=alpha, label=name, zorder=zorder)
+        ax_nom.plot(
+            pv.index,
+            pv.values,
+            color=color,
+            linewidth=lw,
+            alpha=alpha,
+            label=name,
+            zorder=zorder,
+        )
+        ax_log.plot(
+            pv.index,
+            pv / start_val,
+            color=color,
+            linewidth=lw,
+            alpha=alpha,
+            label=name,
+            zorder=zorder,
+        )
 
         if is_top:
             log = entry["rebalance_log"]
@@ -137,19 +153,36 @@ def plot_equity_curves(
                 rv = pv.reindex(log.index).dropna()
                 for ax_ in (ax_nom, ax_log):
                     vals = rv if ax_ is ax_nom else rv / start_val
-                    ax_.scatter(rv.index, vals, color=color, s=20, zorder=5,
-                                alpha=0.7, marker="|", linewidths=1.2)
+                    ax_.scatter(
+                        rv.index,
+                        vals,
+                        color=color,
+                        s=20,
+                        zorder=5,
+                        alpha=0.7,
+                        marker="|",
+                        linewidths=1.2,
+                    )
 
     if benchmark is not None:
         ref_start = portfolio_data[0]["results"]["portfolio_value"].iloc[0]
         idx = portfolio_data[0]["results"].index
-        bench_dollar = (benchmark / benchmark.iloc[0] * ref_start).reindex(idx, method="ffill")
+        bench_dollar = (benchmark / benchmark.iloc[0] * ref_start).reindex(
+            idx, method="ffill"
+        )
         bench_norm = bench_dollar / ref_start
 
         for ax_, vals in ((ax_nom, bench_dollar), (ax_log, bench_norm)):
-            ax_.plot(vals.index, vals.values, color=BENCHMARK_COLOR,
-                     linewidth=0.8, linestyle="--", alpha=0.5, zorder=1,
-                     label="Benchmark" if ax_ is ax_nom else "_nolegend_")
+            ax_.plot(
+                vals.index,
+                vals.values,
+                color=BENCHMARK_COLOR,
+                linewidth=0.8,
+                linestyle="--",
+                alpha=0.5,
+                zorder=1,
+                label="Benchmark" if ax_ is ax_nom else "_nolegend_",
+            )
 
     ax_nom.set_title("Portfolio Value ($)")
     ax_nom.set_ylabel("Value ($)")
@@ -240,7 +273,9 @@ def plot_rolling_sharpe(
         color = color_map[name]
         pv = entry["results"]["portfolio_value"]
         excess = pv.pct_change().dropna() - daily_rf
-        rolling = excess.rolling(window).mean() / excess.rolling(window).std() * np.sqrt(252)
+        rolling = (
+            excess.rolling(window).mean() / excess.rolling(window).std() * np.sqrt(252)
+        )
         ax.plot(rolling.index, rolling.values, color=color, linewidth=0.8, label=name)
 
     ax.axhline(0, color=BORDER, linewidth=0.8)
@@ -357,10 +392,20 @@ def plot_final_allocations(
     tickers = [c.replace("_final_weight", "") for c in weight_cols]
 
     asset_palette = [
-        "#f0c040", "#58a6ff", "#3fb950", "#ffa657", "#d2a8ff",
-        "#f78166", "#79c0ff", "#56d364", "#ff7b72", "#b3f0b3",
+        "#f0c040",
+        "#58a6ff",
+        "#3fb950",
+        "#ffa657",
+        "#d2a8ff",
+        "#f78166",
+        "#79c0ff",
+        "#56d364",
+        "#ff7b72",
+        "#b3f0b3",
     ]
-    ticker_colors = {t: asset_palette[i % len(asset_palette)] for i, t in enumerate(tickers)}
+    ticker_colors = {
+        t: asset_palette[i % len(asset_palette)] for i, t in enumerate(tickers)
+    }
 
     names = comparison.index.tolist()
     n = len(names)
@@ -372,7 +417,8 @@ def plot_final_allocations(
     for ticker, col in zip(tickers, weight_cols):
         values = comparison[col].fillna(0).values
         bars = ax.barh(
-            y, values,
+            y,
+            values,
             left=lefts,
             height=0.6,
             color=ticker_colors[ticker],
@@ -450,12 +496,15 @@ def plot_dashboard(
     fig.patch.set_facecolor(BG)
 
     gs = fig.add_gridspec(
-        6, 2,
+        6,
+        2,
         height_ratios=[3, 3, 2, 1.5, 1.5, 3],
         hspace=0.40,
         wspace=0.45,
-        left=0.10, right=0.88,
-        top=0.94, bottom=0.07,
+        left=0.10,
+        right=0.88,
+        top=0.94,
+        bottom=0.07,
     )
 
     # Rows 0-1: equity curves stacked vertically, full width each
@@ -464,7 +513,9 @@ def plot_dashboard(
 
     # Row 2: metrics 2x2
     gs_metrics = gs[2, :].subgridspec(2, 2, hspace=0.7, wspace=0.5)
-    axes_metrics = [fig.add_subplot(gs_metrics[i, j]) for i in range(2) for j in range(2)]
+    axes_metrics = [
+        fig.add_subplot(gs_metrics[i, j]) for i in range(2) for j in range(2)
+    ]
 
     # Row 3: drawdown full width
     ax_drawdown = fig.add_subplot(gs[3, :])
@@ -475,7 +526,13 @@ def plot_dashboard(
     # Row 5: final allocations full width
     ax_alloc = fig.add_subplot(gs[5, :])
 
-    all_axes = [ax_equity_nom, ax_equity_log, ax_drawdown, ax_rolling, ax_alloc] + axes_metrics
+    all_axes = [
+        ax_equity_nom,
+        ax_equity_log,
+        ax_drawdown,
+        ax_rolling,
+        ax_alloc,
+    ] + axes_metrics
     _apply_theme(fig, all_axes)
 
     plot_equity_curves(
@@ -492,10 +549,23 @@ def plot_dashboard(
     start = portfolio_data[0]["results"].index[0].strftime("%Y-%m-%d")
     end = portfolio_data[0]["results"].index[-1].strftime("%Y-%m-%d")
 
-    fig.text(0.10, 0.997, "Portfolio Backtest Dashboard",
-             color=TEXT, fontsize=14, fontweight="bold", va="top")
-    fig.text(0.10, 0.990, f"{' | '.join(names)}     {start} to {end}",
-             color=TEXT_DIM, fontsize=7, va="top")
+    fig.text(
+        0.10,
+        0.997,
+        "Portfolio Backtest Dashboard",
+        color=TEXT,
+        fontsize=14,
+        fontweight="bold",
+        va="top",
+    )
+    fig.text(
+        0.10,
+        0.990,
+        f"{' | '.join(names)}     {start} to {end}",
+        color=TEXT_DIM,
+        fontsize=7,
+        va="top",
+    )
 
     if output_path is not None:
         fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor=BG)
