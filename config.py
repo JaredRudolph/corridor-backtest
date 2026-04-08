@@ -11,9 +11,10 @@ config = {
         "method": "smart",  # smart | pro_rata
     },
     "rebalance": {
-        "mode": "corridor",  # corridor | periodic | hybrid
+        "mode": "corridor",  # none | corridor | periodic | hybrid
         "threshold_type": "relative",  # absolute | relative
         "band": 0.10,
+        "rebalance_to": "target",  # target | band_edge
         "schedule": "Q",  # used for periodic and hybrid modes
     },
     "optimize": "max_sharpe",  # max_sharpe | min_vol | equal_weight
