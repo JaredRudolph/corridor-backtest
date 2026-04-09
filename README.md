@@ -47,7 +47,7 @@ The default config runs eight strategies over the same date range:
 ## Quickstart
 
 ```bash
-git clone https://github.com/your-username/allocator
+git clone https://github.com/JaredRudolph/allocator.git
 cd allocator
 uv run main.py
 ```
