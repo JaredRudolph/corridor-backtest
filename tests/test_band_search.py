@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from allocator.band_search import search_band
+from corridor_backtest.band_search import search_band
 
 
 # ---------------------------------------------------------------------------
