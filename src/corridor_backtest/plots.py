@@ -1,0 +1,573 @@
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+import numpy as np
+import pandas as pd
+from matplotlib.figure import Figure
+
+# --- Theme constants ---
+
+BG = "#0d1117"
+AXES_BG = "#161b22"
+GRID = "#21262d"
+TEXT = "#e6edf3"
+TEXT_DIM = "#8b949e"
+BORDER = "#30363d"
+
+PALETTE = [
+    "#58a6ff",  # blue
+    "#3fb950",  # green
+    "#ffa657",  # orange
+    "#d2a8ff",  # purple
+    "#f78166",  # salmon
+    "#79c0ff",  # light blue
+    "#56d364",  # light green
+    "#ff7b72",  # coral
+]
+
+BENCHMARK_COLOR = "#8b949e"
+
+LEGEND_STYLE = dict(
+    fontsize=7,
+    framealpha=0.15,
+    facecolor=AXES_BG,
+    edgecolor=BORDER,
+    labelcolor=TEXT,
+)
+
+OUTSIDE_LEGEND = dict(
+    **LEGEND_STYLE,
+    loc="upper left",
+    bbox_to_anchor=(1.01, 1),
+    borderaxespad=0,
+)
+
+
+def _setup_rcparams() -> None:
+    """Set global rcParams so all text contrasts with the dark background."""
+    plt.rcParams["text.color"] = TEXT
+    plt.rcParams["axes.labelcolor"] = TEXT_DIM
+    plt.rcParams["axes.titlecolor"] = TEXT
+    plt.rcParams["xtick.color"] = TEXT_DIM
+    plt.rcParams["ytick.color"] = TEXT_DIM
+    plt.rcParams["legend.labelcolor"] = TEXT
+    plt.rcParams["figure.facecolor"] = BG
+    plt.rcParams["axes.facecolor"] = AXES_BG
+
+
+def _build_color_map(names: list[str]) -> dict[str, str]:
+    """Map strategy names to consistent PALETTE colors by insertion order."""
+    return {name: PALETTE[i % len(PALETTE)] for i, name in enumerate(names)}
+
+
+def _apply_theme(fig: Figure, axes) -> None:
+    """Apply the dark terminal theme to a figure and its axes."""
+    fig.patch.set_facecolor(BG)
+
+    if isinstance(axes, np.ndarray):
+        ax_list = list(axes.flat)
+    elif isinstance(axes, (list, tuple)):
+        ax_list = list(axes)
+    else:
+        ax_list = [axes]
+
+    for ax in ax_list:
+        ax.set_facecolor(AXES_BG)
+        ax.tick_params(colors=TEXT_DIM, labelsize=8)
+        ax.xaxis.label.set_color(TEXT_DIM)
+        ax.yaxis.label.set_color(TEXT_DIM)
+        ax.title.set_color(TEXT)
+        for spine in ax.spines.values():
+            spine.set_edgecolor(BORDER)
+        ax.grid(True, color=GRID, linewidth=0.5, linestyle="--", alpha=0.7)
+        ax.set_axisbelow(True)
+
+
+def plot_equity_curves(
+    portfolio_data: list[dict],
+    benchmark: pd.Series | None = None,
+    color_map: dict[str, str] | None = None,
+    axes: tuple[plt.Axes, plt.Axes] | None = None,
+) -> tuple[plt.Axes, plt.Axes]:
+    """Plot equity curves as two side-by-side subplots.
+
+    Left: nominal dollar scale. Right: normalized to 1.0 at start, log scale.
+    Legend shown only on the left plot. Both share the same x-axis range.
+    Top 3 performers by final value are drawn full weight; others are muted.
+
+    Args:
+        portfolio_data: List of dicts with 'name' and 'results' keys.
+        benchmark: Optional price series for the benchmark.
+        color_map: Dict mapping strategy name to color. Built from PALETTE if None.
+        axes: Tuple of (ax_nominal, ax_log). Creates a new figure if None.
+
+    Returns:
+        Tuple of (ax_nominal, ax_log).
+    """
+    if axes is None:
+        fig, (ax_nom, ax_log) = plt.subplots(2, 1, figsize=(14, 8), sharex=True)
+        _apply_theme(fig, [ax_nom, ax_log])
+    else:
+        ax_nom, ax_log = axes
+
+    names = [e["name"] for e in portfolio_data]
+    if color_map is None:
+        color_map = _build_color_map(names)
+
+    final_values = {
+        e["name"]: e["results"]["portfolio_value"].iloc[-1] for e in portfolio_data
+    }
+    top3 = set(sorted(final_values, key=final_values.get, reverse=True)[:3])
+
+    for entry in portfolio_data:
+        name = entry["name"]
+        color = color_map[name]
+        pv = entry["results"]["portfolio_value"]
+        start_val = pv.iloc[0]
+        is_top = name in top3
+        lw = 0.8
+        alpha = 1.0 if is_top else 0.35
+        zorder = 3 if is_top else 2
+
+        ax_nom.plot(
+            pv.index,
+            pv.values,
+            color=color,
+            linewidth=lw,
+            alpha=alpha,
+            label=name,
+            zorder=zorder,
+        )
+        ax_log.plot(
+            pv.index,
+            pv / start_val,
+            color=color,
+            linewidth=lw,
+            alpha=alpha,
+            label=name,
+            zorder=zorder,
+        )
+
+        if is_top:
+            log = entry["rebalance_log"]
+            if not log.empty:
+                rv = pv.reindex(log.index).dropna()
+                for ax_ in (ax_nom, ax_log):
+                    vals = rv if ax_ is ax_nom else rv / start_val
+                    ax_.scatter(
+                        rv.index,
+                        vals,
+                        color=color,
+                        s=20,
+                        zorder=5,
+                        alpha=0.7,
+                        marker="|",
+                        linewidths=1.2,
+                    )
+
+    if benchmark is not None:
+        ref_start = portfolio_data[0]["results"]["portfolio_value"].iloc[0]
+        idx = portfolio_data[0]["results"].index
+        bench_dollar = (benchmark / benchmark.iloc[0] * ref_start).reindex(
+            idx, method="ffill"
+        )
+        bench_norm = bench_dollar / ref_start
+
+        for ax_, vals in ((ax_nom, bench_dollar), (ax_log, bench_norm)):
+            ax_.plot(
+                vals.index,
+                vals.values,
+                color=BENCHMARK_COLOR,
+                linewidth=0.8,
+                linestyle="--",
+                alpha=0.5,
+                zorder=1,
+                label="Benchmark" if ax_ is ax_nom else "_nolegend_",
+            )
+
+    ax_nom.set_title("Portfolio Value ($)")
+    ax_nom.set_ylabel("Value ($)")
+    ax_nom.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"${x:,.0f}"))
+    ax_nom.legend(**LEGEND_STYLE)
+
+    ax_log.set_title("Growth Multiple (log scale)")
+    ax_log.set_ylabel("Growth Multiple")
+    ax_log.set_yscale("log")
+    ax_log.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:.1f}x"))
+    ax_log.legend(**LEGEND_STYLE)
+
+    return ax_nom, ax_log
+
+
+def plot_drawdown(
+    portfolio_data: list[dict],
+    color_map: dict[str, str] | None = None,
+    ax: plt.Axes | None = None,
+) -> plt.Axes:
+    """Plot underwater drawdown chart for all portfolios.
+
+    Args:
+        portfolio_data: List of dicts with 'name' and 'results' keys.
+        color_map: Dict mapping strategy name to color. Built from PALETTE if None.
+        ax: Axes to plot on. Creates a new figure if None.
+
+    Returns:
+        The Axes with drawdown series drawn.
+    """
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(14, 3))
+        _apply_theme(fig, ax)
+
+    names = [e["name"] for e in portfolio_data]
+    if color_map is None:
+        color_map = _build_color_map(names)
+
+    for entry in portfolio_data:
+        name = entry["name"]
+        color = color_map[name]
+        pv = entry["results"]["portfolio_value"]
+        peak = pv.cummax()
+        drawdown = (pv - peak) / peak
+        ax.plot(drawdown.index, drawdown.values, color=color, linewidth=0.8, label=name)
+        ax.fill_between(drawdown.index, drawdown.values, 0, color=color, alpha=0.08)
+
+    ax.axhline(0, color=BORDER, linewidth=0.8)
+    ax.set_title("Drawdown")
+    ax.set_ylabel("Drawdown")
+    ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:.0%}"))
+    ax.legend(**OUTSIDE_LEGEND)
+
+    return ax
+
+
+def plot_rolling_sharpe(
+    portfolio_data: list[dict],
+    window: int = 252,
+    risk_free_rate: float = 0.0,
+    color_map: dict[str, str] | None = None,
+    ax: plt.Axes | None = None,
+) -> plt.Axes:
+    """Plot rolling annualized Sharpe ratio. Legend placed outside the axes.
+
+    Args:
+        portfolio_data: List of dicts with 'name' and 'results' keys.
+        window: Rolling window in trading days. Default is 252 (1 year).
+        risk_free_rate: Annualized risk-free rate.
+        color_map: Dict mapping strategy name to color. Built from PALETTE if None.
+        ax: Axes to plot on. Creates a new figure if None.
+
+    Returns:
+        The Axes with rolling Sharpe series drawn.
+    """
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(14, 3))
+        _apply_theme(fig, ax)
+
+    names = [e["name"] for e in portfolio_data]
+    if color_map is None:
+        color_map = _build_color_map(names)
+
+    daily_rf = risk_free_rate / 252
+
+    for entry in portfolio_data:
+        name = entry["name"]
+        color = color_map[name]
+        pv = entry["results"]["portfolio_value"]
+        excess = pv.pct_change().dropna() - daily_rf
+        rolling = (
+            excess.rolling(window).mean() / excess.rolling(window).std() * np.sqrt(252)
+        )
+        ax.plot(rolling.index, rolling.values, color=color, linewidth=0.8, label=name)
+
+    ax.axhline(0, color=BORDER, linewidth=0.8)
+    ax.axhline(1, color=TEXT_DIM, linewidth=0.5, linestyle=":", alpha=0.5)
+    ax.set_title(f"Rolling Sharpe ({window}d)")
+    ax.set_ylabel("Sharpe")
+
+    # Single legend placed outside -- do not call ax.legend() anywhere else
+    ax.legend(**OUTSIDE_LEGEND)
+
+    return ax
+
+
+def plot_metrics_comparison(
+    comparison: pd.DataFrame,
+    color_map: dict[str, str] | None = None,
+    axes: list[plt.Axes] | None = None,
+) -> list[plt.Axes]:
+    """Plot per-metric horizontal bar charts sorted by value.
+
+    Args:
+        comparison: DataFrame with one row per portfolio from pipeline.run_pipeline.
+        color_map: Dict mapping strategy name to color. Built from PALETTE if None.
+        axes: List of 4 Axes. Creates a 2x2 figure if None.
+
+    Returns:
+        List of the 4 Axes used.
+    """
+    metrics = [
+        ("cagr", "CAGR", "{:.1%}"),
+        ("sharpe", "Sharpe", "{:.2f}"),
+        ("calmar", "Calmar", "{:.2f}"),
+        ("max_drawdown", "Max Drawdown", "{:.1%}"),
+    ]
+
+    names = comparison.index.tolist()
+    if color_map is None:
+        color_map = _build_color_map(names)
+
+    if axes is None:
+        fig, ax_grid = plt.subplots(2, 2, figsize=(10, 7))
+        _apply_theme(fig, ax_grid)
+        axes = list(ax_grid.flat)
+
+    for ax, (col, title, fmt) in zip(axes, metrics):
+        raw = comparison[col]
+        order = raw.argsort()
+        sorted_names = [names[i] for i in order]
+        sorted_values = raw.iloc[order].values
+        sorted_colors = [color_map[n] for n in sorted_names]
+
+        y = np.arange(len(sorted_names))
+        ax.barh(y, sorted_values, color=sorted_colors, height=0.6, alpha=0.85)
+
+        ax.set_yticks(y)
+        ax.set_yticklabels(sorted_names, fontsize=7)
+        ax.set_title(title)
+        ax.axvline(0, color=BORDER, linewidth=0.8)
+
+        x_lo, x_hi = ax.get_xlim()
+        x_range = x_hi - x_lo
+        if col == "max_drawdown":
+            ax.set_xlim(left=sorted_values.min() * 1.15)
+        else:
+            ax.set_xlim(x_lo, x_hi + x_range * 0.28)
+
+        for val, yi in zip(sorted_values, y):
+            if np.isfinite(val):
+                if col == "max_drawdown":
+                    ax.text(
+                        val - 0.005,
+                        yi,
+                        fmt.format(val),
+                        va="center",
+                        ha="right",
+                        fontsize=7,
+                        color=TEXT_DIM,
+                    )
+                else:
+                    ax.text(
+                        val + x_range * 0.015,
+                        yi,
+                        fmt.format(val),
+                        va="center",
+                        ha="left",
+                        fontsize=7,
+                        color=TEXT_DIM,
+                    )
+
+    return list(axes)
+
+
+def plot_final_allocations(
+    comparison: pd.DataFrame,
+    ax: plt.Axes | None = None,
+) -> plt.Axes:
+    """Plot final portfolio allocations as stacked horizontal bars.
+
+    One row per portfolio. Asset legend placed below the chart.
+
+    Args:
+        comparison: DataFrame with one row per portfolio from pipeline.run_pipeline.
+            Must contain '{ticker}_final_weight' columns.
+        ax: Axes to plot on. Creates a new figure if None.
+
+    Returns:
+        The Axes with allocations drawn.
+    """
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(16, 7))
+        _apply_theme(fig, ax)
+
+    weight_cols = [c for c in comparison.columns if c.endswith("_final_weight")]
+    tickers = [c.replace("_final_weight", "") for c in weight_cols]
+
+    asset_palette = [
+        "#f0c040",
+        "#58a6ff",
+        "#3fb950",
+        "#ffa657",
+        "#d2a8ff",
+        "#f78166",
+        "#79c0ff",
+        "#56d364",
+        "#ff7b72",
+        "#b3f0b3",
+    ]
+    ticker_colors = {
+        t: asset_palette[i % len(asset_palette)] for i, t in enumerate(tickers)
+    }
+
+    names = comparison.index.tolist()
+    n = len(names)
+    # One y-position per strategy with enough spacing
+    y = np.arange(n)
+
+    lefts = np.zeros(n)
+    handles = []
+    for ticker, col in zip(tickers, weight_cols):
+        values = comparison[col].fillna(0).values
+        bars = ax.barh(
+            y,
+            values,
+            left=lefts,
+            height=0.6,
+            color=ticker_colors[ticker],
+            alpha=0.9,
+        )
+        handles.append(bars[0])
+        for j in range(n):
+            val = values[j]
+            if val > 0.04:
+                ax.text(
+                    lefts[j] + val / 2,
+                    y[j],
+                    f"{val:.0%}",
+                    ha="center",
+                    va="center",
+                    fontsize=7,
+                    color=BG,
+                    fontweight="bold",
+                )
+        lefts += values
+
+    ax.set_yticks(y)
+    ax.set_yticklabels(names, fontsize=8)
+    ax.set_xlim(0, 1)
+    ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:.0%}"))
+    ax.set_title("Final Allocations")
+
+    # Asset legend forced into a single row below the chart
+    ax.legend(
+        handles,
+        tickers,
+        fontsize=8,
+        framealpha=0.15,
+        facecolor=AXES_BG,
+        edgecolor=BORDER,
+        labelcolor=TEXT,
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.08),
+        ncol=len(tickers),
+        borderaxespad=0,
+    )
+
+    return ax
+
+
+def plot_dashboard(
+    comparison: pd.DataFrame,
+    portfolio_data: list[dict],
+    benchmark: pd.Series | None = None,
+    output_path: str | None = None,
+) -> Figure:
+    """Assemble the full tear sheet dashboard.
+
+    Layout:
+      Row 0: Equity curves (left) | Metrics 2x2 (right)
+      Row 1: Drawdown (full width)
+      Row 2: Rolling Sharpe (full width)
+      Row 3: Final allocations (full width, taller)
+
+    Args:
+        comparison: DataFrame with one row per portfolio from pipeline.run_pipeline.
+        portfolio_data: List of dicts with 'name', 'results', 'rebalance_log'.
+        benchmark: Optional benchmark price series for the equity curve.
+        output_path: If provided, saves the figure to this path.
+
+    Returns:
+        The assembled Figure.
+    """
+    _setup_rcparams()
+
+    names = [e["name"] for e in portfolio_data]
+    color_map = _build_color_map(names)
+
+    fig = plt.figure(figsize=(14, 24))
+    fig.patch.set_facecolor(BG)
+
+    gs = fig.add_gridspec(
+        6,
+        2,
+        height_ratios=[3, 3, 2, 1.5, 1.5, 3],
+        hspace=0.40,
+        wspace=0.45,
+        left=0.10,
+        right=0.88,
+        top=0.94,
+        bottom=0.07,
+    )
+
+    # Rows 0-1: equity curves stacked vertically, full width each
+    ax_equity_nom = fig.add_subplot(gs[0, :])
+    ax_equity_log = fig.add_subplot(gs[1, :])
+
+    # Row 2: metrics 2x2
+    gs_metrics = gs[2, :].subgridspec(2, 2, hspace=0.7, wspace=0.5)
+    axes_metrics = [
+        fig.add_subplot(gs_metrics[i, j]) for i in range(2) for j in range(2)
+    ]
+
+    # Row 3: drawdown full width
+    ax_drawdown = fig.add_subplot(gs[3, :])
+
+    # Row 4: rolling sharpe full width
+    ax_rolling = fig.add_subplot(gs[4, :])
+
+    # Row 5: final allocations full width
+    ax_alloc = fig.add_subplot(gs[5, :])
+
+    all_axes = [
+        ax_equity_nom,
+        ax_equity_log,
+        ax_drawdown,
+        ax_rolling,
+        ax_alloc,
+    ] + axes_metrics
+    _apply_theme(fig, all_axes)
+
+    plot_equity_curves(
+        portfolio_data,
+        benchmark=benchmark,
+        color_map=color_map,
+        axes=(ax_equity_nom, ax_equity_log),
+    )
+    plot_metrics_comparison(comparison, color_map=color_map, axes=axes_metrics)
+    plot_drawdown(portfolio_data, color_map=color_map, ax=ax_drawdown)
+    plot_rolling_sharpe(portfolio_data, color_map=color_map, ax=ax_rolling)
+    plot_final_allocations(comparison, ax=ax_alloc)
+
+    start = portfolio_data[0]["results"].index[0].strftime("%Y-%m-%d")
+    end = portfolio_data[0]["results"].index[-1].strftime("%Y-%m-%d")
+
+    fig.text(
+        0.10,
+        0.997,
+        "Portfolio Backtest Dashboard",
+        color=TEXT,
+        fontsize=14,
+        fontweight="bold",
+        va="top",
+    )
+    fig.text(
+        0.10,
+        0.990,
+        f"{' | '.join(names)}     {start} to {end}",
+        color=TEXT_DIM,
+        fontsize=7,
+        va="top",
+    )
+
+    if output_path is not None:
+        fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor=BG)
+
+    return fig
