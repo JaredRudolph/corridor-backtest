@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from allocator.backtest import (
+from corridor_backtest.backtest import (
     _apply_contribution,
     _contribution_due,
     _resolve_bounds,
