@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from allocator.metrics import (
+from corridor_backtest.metrics import (
     _total_contributions,
     cagr,
     calmar,
