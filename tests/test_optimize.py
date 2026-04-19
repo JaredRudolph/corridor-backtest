@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from allocator.optimize import ROLLING_WINDOW_DAYS, compute_weights
+from corridor_backtest.optimize import ROLLING_WINDOW_DAYS, compute_weights
 
 
 # ---------------------------------------------------------------------------
