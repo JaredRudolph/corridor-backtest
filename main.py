@@ -5,7 +5,7 @@ from loguru import logger
 from config import portfolios
 from corridor_backtest.data import fetch_prices
 from corridor_backtest.pipeline import run_pipeline
-from corridor_backtest.plots import plot_dashboard
+from corridor_backtest.plots import plot_corridor_dashboard, plot_dashboard
 
 OUTPUT_DIR = Path("data/processed")
 PLOTS_DIR = OUTPUT_DIR / "plots"
@@ -57,6 +57,13 @@ def main() -> None:
         output_path=assets_path,
     )
     logger.info(f"Dashboard saved to {dashboard_path} and {assets_path}")
+
+    corridor_path = str(PLOTS_DIR / "corridor_dashboard.png")
+    corridor_assets_path = str(ASSETS_DIR / "corridor_dashboard.png")
+    plot_corridor_dashboard(portfolio_data, output_path=corridor_path)
+    plot_corridor_dashboard(portfolio_data, output_path=corridor_assets_path)
+    logger.info(f"Corridor dashboard saved to {corridor_path} and {corridor_assets_path}")
+
     logger.info(f"Results saved to {OUTPUT_DIR}")
 
 
