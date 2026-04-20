@@ -1,22 +1,28 @@
 # corridor-backtest
 
-A portfolio backtesting engine with multi-mode rebalancing, mean-variance optimization, and side-by-side strategy comparison.
+A portfolio backtesting engine focused on corridor rebalancing -- finding the optimal band width for a given strategy. Supports multi-mode rebalancing, mean-variance optimization, band search, and side-by-side strategy comparison.
 
 ![Portfolio Backtest Dashboard](assets/dashboard.png)
+![Corridor Optimization Dashboard](assets/corridor_dashboard.png)
 
 ## Overview
 
-corridor-backtest simulates realistic portfolio behavior over historical price data. Each portfolio is independently configured with its own tickers, target weights, rebalancing strategy, and optional optimizer. Results are compared side by side across all strategies.
+corridor-backtest simulates realistic portfolio behavior over historical price data. The core question it answers: given a portfolio's volatility and asset mix, what corridor band width maximizes risk-adjusted performance? Each portfolio is independently configured with its own tickers, target weights, rebalancing strategy, and optional optimizer. Results are compared side by side across all strategies.
 
 **Core features:**
 
 - Corridor, periodic, hybrid, and no-rebalance modes
+- Band search: parameter search over corridor widths scored by Sharpe, CAGR, Calmar, or Sortino
 - Rebalance to target weights or corridor band edge (minimize turnover)
 - Mean-variance optimization: max Sharpe, max Sortino, min vol, equal weight
 - Per-asset or lazy global weight bounds fed directly to the optimizer
-- Band search: parameter search over corridor widths scored by Sharpe, CAGR, Calmar, or Sortino
 - Periodic contributions with smart (fill underweight first) or pro-rata allocation
 - Performance metrics: CAGR, Sharpe, Sortino, Calmar, max drawdown, rebalance frequency
+
+**Output:**
+
+- Tear sheet dashboard: equity curves, drawdown, rolling Sharpe, metrics comparison, avg realized allocations
+- Corridor dashboard: band search score curves with optimal band annotated, per-asset weight corridors with rebalance markers
 
 ## Rebalancing Modes
 
@@ -73,7 +79,7 @@ cd corridor-backtest
 uv run main.py
 ```
 
-Results are saved to `data/processed/`. The dashboard is saved to `assets/dashboard.png`.
+Results are saved to `data/processed/`. Dashboards are saved to `assets/dashboard.png` and `assets/corridor_dashboard.png`.
 
 ## Configuration
 
@@ -135,7 +141,8 @@ corridor-backtest/
 │   ├── raw/                # price cache (gitignored)
 │   └── processed/          # backtest output (gitignored)
 └── assets/
-    └── dashboard.png
+    ├── dashboard.png
+    └── corridor_dashboard.png
 ```
 
 ## Dependencies
