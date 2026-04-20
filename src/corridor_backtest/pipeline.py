@@ -47,14 +47,15 @@ def run_pipeline(
             prices[benchmark] if benchmark and benchmark in prices.columns else None
         )
 
+        band_search_results = None
         if "band_search" in config:
             logger.info(
                 f"[{name}] Running band search ({config['band_search']['metric']})..."
             )
-            best_band, search_results = search_band(portfolio_prices, config)
+            best_band, band_search_results = search_band(portfolio_prices, config)
             logger.info(
                 f"[{name}] Best band: {best_band:.4f} "
-                f"(score: {search_results.iloc[0]['score']:.4f})"
+                f"(score: {band_search_results.iloc[0]['score']:.4f})"
             )
             config = {**config, "rebalance": {**config["rebalance"], "band": best_band}}
 
@@ -63,7 +64,13 @@ def run_pipeline(
         summary = summarize(results, rebalance_log, config, benchmark_prices)
         summaries.append(summary)
         portfolio_data.append(
-            {"name": name, "results": results, "rebalance_log": rebalance_log}
+            {
+                "name": name,
+                "results": results,
+                "rebalance_log": rebalance_log,
+                "band_search_results": band_search_results,
+                "config": config,
+            }
         )
 
         logger.info(
