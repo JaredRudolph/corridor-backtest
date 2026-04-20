@@ -1,4 +1,4 @@
-# allocator
+# corridor-backtest
 
 A portfolio backtesting engine with multi-mode rebalancing, mean-variance optimization, and side-by-side strategy comparison.
 
@@ -6,7 +6,7 @@ A portfolio backtesting engine with multi-mode rebalancing, mean-variance optimi
 
 ## Overview
 
-allocator simulates realistic portfolio behavior over historical price data. Each portfolio is independently configured with its own tickers, target weights, rebalancing strategy, and optional optimizer. Results are compared side by side across all strategies.
+corridor-backtest simulates realistic portfolio behavior over historical price data. Each portfolio is independently configured with its own tickers, target weights, rebalancing strategy, and optional optimizer. Results are compared side by side across all strategies.
 
 **Core features:**
 
@@ -31,24 +31,39 @@ Corridor bands can be **absolute** (`target +/- band`) or **relative** (`target 
 
 ## Portfolios
 
-The default config runs eight strategies over the same date range:
+The default config runs six strategies organized around four themes:
 
-| Portfolio | Mode | Optimizer | Description |
-|---|---|---|---|
-| `corridor_relative` | corridor | max Sharpe | Relative bands, optimized weights |
-| `periodic_minvol` | periodic | min vol | Quarterly rebalance, minimum variance |
-| `buy_and_hold` | none | none | Passive baseline |
-| `all_weather` | corridor | none | Ray Dalio All Weather |
-| `sixty_forty` | periodic | none | Classic 60/40 |
-| `golden_butterfly` | corridor | none | Rebalances to band edge |
-| `permanent_portfolio` | hybrid | none | Harry Browne four-quadrant |
-| `global_growth` | corridor | max Sharpe | Global diversification, band search |
+**Rebalancing mode comparison** -- identical risk-parity allocation (SPY/TLT/GLD/IEF), three rebalancing modes side by side:
+
+| Portfolio | Mode | Description |
+|---|---|---|
+| `rp_corridor` | corridor | Relative bands, rebalances on breach |
+| `rp_periodic` | periodic | Quarterly rebalance regardless of drift |
+| `rp_hold` | none | Buy and hold, no rebalancing |
+
+**Volatile / leveraged:**
+
+| Portfolio | Mode | Description |
+|---|---|---|
+| `leveraged_rp` | corridor + band search | UPRO/TMF/GLD -- 3x leveraged, corridor fires frequently, Calmar-optimized band |
+
+**Conservative / regime-balanced:**
+
+| Portfolio | Mode | Description |
+|---|---|---|
+| `all_weather` | hybrid | Ray Dalio All Weather -- rebalances on schedule only if drift occurred |
+
+**Optimized corridor:**
+
+| Portfolio | Mode | Description |
+|---|---|---|
+| `global_sharpe` | corridor + optimizer + band search | Global equity and bonds, rolling max-Sharpe weights, Sharpe-optimized band |
 
 ## Quickstart
 
 ```bash
-git clone https://github.com/JaredRudolph/allocator.git
-cd allocator
+git clone https://github.com/JaredRudolph/corridor-backtest.git
+cd corridor-backtest
 uv run main.py
 ```
 
@@ -97,10 +112,10 @@ portfolios = [
 ## Project Structure
 
 ```
-allocator/
+corridor-backtest/
 ├── main.py                 # entry point
 ├── config.py               # portfolio definitions
-├── src/allocator/
+├── src/corridor_backtest/
 │   ├── data.py             # price fetching (yfinance)
 │   ├── optimize.py         # mean-variance optimizer
 │   ├── rebalance.py        # corridor and schedule logic
@@ -128,6 +143,6 @@ allocator/
 
 ```bash
 uv run pytest        # run tests
-uv run ruff check .  # lint
 uv run ruff format . # format
+uv run ruff check .  # lint
 ```
