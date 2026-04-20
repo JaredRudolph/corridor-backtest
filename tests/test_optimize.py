@@ -4,7 +4,6 @@ import pytest
 
 from corridor_backtest.optimize import ROLLING_WINDOW_DAYS, compute_weights
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
