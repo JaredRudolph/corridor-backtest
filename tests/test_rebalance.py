@@ -10,7 +10,6 @@ from corridor_backtest.rebalance import (
     should_rebalance,
 )
 
-
 # ---------------------------------------------------------------------------
 # _bands
 # ---------------------------------------------------------------------------
@@ -248,4 +247,10 @@ def test_apply_rebalance_to_band_edge_leaves_within_unchanged():
 def test_apply_rebalance_unknown_rebalance_to():
     cfg = {"rebalance_to": "midpoint", "band": 0.05, "threshold_type": "absolute"}
     with pytest.raises(ValueError, match="Unknown rebalance_to"):
-        apply_rebalance(1000.0, np.array([0.5, 0.5]), _prices([100.0, 100.0]), np.array([0.5, 0.5]), cfg)
+        apply_rebalance(
+            1000.0,
+            np.array([0.5, 0.5]),
+            _prices([100.0, 100.0]),
+            np.array([0.5, 0.5]),
+            cfg,
+        )
