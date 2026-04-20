@@ -368,17 +368,17 @@ def plot_metrics_comparison(
     return list(axes)
 
 
-def plot_final_allocations(
+def plot_avg_allocations(
     comparison: pd.DataFrame,
     ax: plt.Axes | None = None,
 ) -> plt.Axes:
-    """Plot final portfolio allocations as stacked horizontal bars.
+    """Plot average realized portfolio allocations as stacked horizontal bars.
 
     One row per portfolio. Asset legend placed below the chart.
 
     Args:
         comparison: DataFrame with one row per portfolio from pipeline.run_pipeline.
-            Must contain '{ticker}_final_weight' columns.
+            Must contain '{ticker}_avg_weight' columns.
         ax: Axes to plot on. Creates a new figure if None.
 
     Returns:
@@ -388,8 +388,8 @@ def plot_final_allocations(
         fig, ax = plt.subplots(figsize=(16, 7))
         _apply_theme(fig, ax)
 
-    weight_cols = [c for c in comparison.columns if c.endswith("_final_weight")]
-    tickers = [c.replace("_final_weight", "") for c in weight_cols]
+    weight_cols = [c for c in comparison.columns if c.endswith("_avg_weight")]
+    tickers = [c.replace("_avg_weight", "") for c in weight_cols]
 
     asset_palette = [
         "#f0c040",
@@ -444,7 +444,7 @@ def plot_final_allocations(
     ax.set_yticklabels(names, fontsize=8)
     ax.set_xlim(0, 1)
     ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:.0%}"))
-    ax.set_title("Final Allocations")
+    ax.set_title("Avg Realized Allocations")
 
     # Asset legend forced into a single row below the chart
     ax.legend(
@@ -544,7 +544,7 @@ def plot_dashboard(
     plot_metrics_comparison(comparison, color_map=color_map, axes=axes_metrics)
     plot_drawdown(portfolio_data, color_map=color_map, ax=ax_drawdown)
     plot_rolling_sharpe(portfolio_data, color_map=color_map, ax=ax_rolling)
-    plot_final_allocations(comparison, ax=ax_alloc)
+    plot_avg_allocations(comparison, ax=ax_alloc)
 
     start = portfolio_data[0]["results"].index[0].strftime("%Y-%m-%d")
     end = portfolio_data[0]["results"].index[-1].strftime("%Y-%m-%d")
