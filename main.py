@@ -2,10 +2,10 @@ from pathlib import Path
 
 from loguru import logger
 
+from config import portfolios
 from corridor_backtest.data import fetch_prices
 from corridor_backtest.pipeline import run_pipeline
 from corridor_backtest.plots import plot_dashboard
-from config import portfolios
 
 OUTPUT_DIR = Path("data/processed")
 PLOTS_DIR = OUTPUT_DIR / "plots"
