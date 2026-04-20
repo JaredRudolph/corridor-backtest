@@ -4,7 +4,6 @@ import pytest
 
 from corridor_backtest.pipeline import run_pipeline
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -152,6 +151,7 @@ def test_run_pipeline_band_search_patches_best_band(monkeypatch):
 
     def _search_band(prices, config):
         from corridor_backtest.band_search import search_band as real_search_band
+
         best_band, results = real_search_band(prices, config)
         captured["best_band"] = best_band
         return best_band, results
