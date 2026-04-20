@@ -125,6 +125,38 @@ portfolios = [
             "schedule": "Q",
         },
     },
+    # --- Group 3b: mixed leveraged / unleveraged ---
+    # 50% leveraged (UPRO/TMF/TECL) + 50% unleveraged (SPY/XLK). Corridor rebalancing
+    # systematically trims leveraged winners into the unleveraged side and buys back
+    # when leveraged positions drop. Absolute bands suit the high-vol leveraged
+    # positions.
+    {
+        "name": "lev_unlev_mix",
+        "tickers": ["UPRO", "TMF", "TECL", "SPY", "XLK"],
+        "weights": {"UPRO": 0.20, "TMF": 0.15, "TECL": 0.15, "SPY": 0.30, "XLK": 0.20},
+        "benchmark": "SPY",
+        "start": "2015-01-01",
+        "end": None,
+        "initial_capital": 10_000,
+        "risk_free_rate": 0.0,
+        "contribution": {
+            "amount": 500,
+            "frequency": "M",
+            "method": "smart",
+        },
+        "rebalance": {
+            "mode": "corridor",
+            "threshold_type": "absolute",
+            "band": 0.07,
+            "rebalance_to": "target",
+            "schedule": "Q",
+        },
+        "band_search": {
+            "metric": "calmar",
+            "band_range": [0.02, 0.20],
+            "steps": 20,
+        },
+    },
     # --- Group 4: optimized corridor ---
     # Global diversified equity and bonds with a rolling max-Sharpe optimizer.
     # Band search finds the corridor width that maximizes Sharpe over the backtest.
