@@ -236,6 +236,7 @@ def run_backtest(
                 "date": date,
                 "portfolio_value": port_val,
                 **{f"{t}_weight": current_weights[i] for i, t in enumerate(tickers)},
+                **{f"{t}_target": targets[i] for i, t in enumerate(tickers)},
                 "rebalanced": do_rebalance,
                 "trigger": trigger,
             }
