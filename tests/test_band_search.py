@@ -64,7 +64,7 @@ def test_search_band_results_columns():
 
 def test_search_band_results_row_count_matches_steps():
     prices = _make_prices()
-    steps = 6
+    steps = 35
     _, results = search_band(prices, _base_config(steps=steps))
     assert len(results) == steps
 
