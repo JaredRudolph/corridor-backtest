@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from corridor_backtest.optimize import compute_weights
-from corridor_backtest.rebalance import _breached, apply_rebalance, should_rebalance
+from corridor_backtest.rebalance import _breached, _on_schedule, apply_rebalance, should_rebalance
 
 
 def _apply_contribution(
@@ -164,6 +164,7 @@ def run_backtest(
     shares = targets * config["initial_capital"] / prices.iloc[0].values
     last_rebalance = prices.index[0]
     last_contribution = prices.index[0]
+    last_opt_update = prices.index[0]
     breach_since_last = False
 
     records = []
@@ -186,10 +187,11 @@ def run_backtest(
         current_weights = (shares * price_row.values) / port_val
 
         if rebalance_cfg["mode"] == "hybrid":
+            trigger_band = rebalance_cfg.get("corridor", rebalance_cfg["band"])
             if _breached(
                 current_weights,
                 targets,
-                rebalance_cfg["band"],
+                trigger_band,
                 rebalance_cfg["threshold_type"],
             ):
                 breach_since_last = True
@@ -207,12 +209,15 @@ def run_backtest(
             pre_weights = current_weights.copy()
 
             if optimize_cfg and date in returns.index:
-                targets = compute_weights(
-                    returns.loc[:date],
-                    optimize_cfg["objective"],
-                    risk_free_rate,
-                    bounds,
-                )
+                opt_schedule = rebalance_cfg.get("schedule", "Q")
+                if _on_schedule(date, opt_schedule, last_opt_update):
+                    targets = compute_weights(
+                        returns.loc[:date],
+                        optimize_cfg["objective"],
+                        risk_free_rate,
+                        bounds,
+                    )
+                    last_opt_update = date
 
             shares = apply_rebalance(
                 port_val, targets, price_row, current_weights, rebalance_cfg
