@@ -46,28 +46,6 @@ portfolios = [
             "schedule": "Q",
         },
     },
-    {
-        "name": "rp_hold",
-        "tickers": ["SPY", "TLT", "GLD", "IEF"],
-        "weights": {"SPY": 0.30, "TLT": 0.40, "GLD": 0.15, "IEF": 0.15},
-        "benchmark": "SPY",
-        "start": "2015-01-01",
-        "end": None,
-        "initial_capital": 10_000,
-        "risk_free_rate": 0.0,
-        "contribution": {
-            "amount": 500,
-            "frequency": "M",
-            "method": "pro_rata",
-        },
-        "rebalance": {
-            "mode": "none",
-            "threshold_type": "relative",
-            "band": 0.15,
-            "rebalance_to": "target",
-            "schedule": "Q",
-        },
-    },
     # --- Group 2: leveraged risk parity ---
     # 3x leveraged equity and bond ETFs with gold. Hybrid mode gates rebalancing to the
     # quarterly schedule while tracking corridor breaches daily -- prevents chattering
@@ -96,8 +74,9 @@ portfolios = [
         },
         "band_search": {
             "metric": "calmar",
-            "band_range": [0.08, 0.25],
-            "steps": 20,
+            "band_range": [0.02, 0.20],
+            "corridor_range": [0.04, 0.25],
+            "steps": 10,
         },
     },
     # --- Group 3: conservative, regime-balanced ---
@@ -124,38 +103,6 @@ portfolios = [
             "band": 0.05,
             "rebalance_to": "target",
             "schedule": "Q",
-        },
-    },
-    # --- Group 3b: mixed leveraged / unleveraged ---
-    # 50% leveraged (UPRO/TMF/TECL) + 50% unleveraged (SPY/XLK). Hybrid mode trims
-    # leveraged winners into the unleveraged side on schedule when drift has occurred,
-    # with band_edge minimizing trade size. Absolute bands suit the high-vol positions.
-    {
-        "name": "lev_unlev_mix",
-        "tickers": ["UPRO", "TMF", "TECL", "SPY", "XLK"],
-        "weights": {"UPRO": 0.20, "TMF": 0.15, "TECL": 0.15, "SPY": 0.30, "XLK": 0.20},
-        "benchmark": "SPY",
-        "start": "2015-01-01",
-        "end": None,
-        "initial_capital": 10_000,
-        "risk_free_rate": 0.0,
-        "contribution": {
-            "amount": 500,
-            "frequency": "M",
-            "method": "smart",
-        },
-        "rebalance": {
-            "mode": "corridor",
-            "threshold_type": "absolute",
-            "band": 0.04,
-            "corridor": 0.12,
-            "rebalance_to": "band_edge",
-            "schedule": "Q",
-        },
-        "band_search": {
-            "metric": "calmar",
-            "band_range": [0.02, 0.20],
-            "steps": 20,
         },
     },
     # --- Group 5: leveraged ETF corridor strategies (band_edge) ---
@@ -187,8 +134,9 @@ portfolios = [
         },
         "band_search": {
             "metric": "calmar",
-            "band_range": [0.08, 0.25],
-            "steps": 20,
+            "band_range": [0.02, 0.20],
+            "corridor_range": [0.04, 0.25],
+            "steps": 10,
         },
     },
     # hfea_blended: HFEA variant splitting the bond leg equally between TYD (3x 7-10yr)
@@ -218,39 +166,9 @@ portfolios = [
         },
         "band_search": {
             "metric": "calmar",
-            "band_range": [0.08, 0.25],
-            "steps": 20,
-        },
-    },
-    # lev_growth: QQQ-tilted leveraged portfolio. TQQQ provides more tech growth exposure
-    # than UPRO alone; TMF hedges the bond side. band_edge lets winners run further before
-    # trimming, preserving momentum in high-growth regimes.
-    {
-        "name": "lev_growth",
-        "tickers": ["TQQQ", "UPRO", "TMF"],
-        "weights": {"TQQQ": 0.40, "UPRO": 0.20, "TMF": 0.40},
-        "benchmark": "QQQ",
-        "start": "2015-01-01",
-        "end": None,
-        "initial_capital": 10_000,
-        "risk_free_rate": 0.0,
-        "contribution": {
-            "amount": 500,
-            "frequency": "M",
-            "method": "smart",
-        },
-        "rebalance": {
-            "mode": "corridor",
-            "threshold_type": "absolute",
-            "band": 0.06,
-            "corridor": 0.16,
-            "rebalance_to": "band_edge",
-            "schedule": "Q",
-        },
-        "band_search": {
-            "metric": "calmar",
-            "band_range": [0.08, 0.28],
-            "steps": 20,
+            "band_range": [0.02, 0.20],
+            "corridor_range": [0.04, 0.25],
+            "steps": 10,
         },
     },
     # lev_sector: four-asset leveraged portfolio adding tech-sector concentration via TECL
@@ -280,8 +198,9 @@ portfolios = [
         },
         "band_search": {
             "metric": "calmar",
-            "band_range": [0.08, 0.28],
-            "steps": 20,
+            "band_range": [0.02, 0.20],
+            "corridor_range": [0.04, 0.28],
+            "steps": 10,
         },
     },
     # --- Group 4: optimized corridor ---
