@@ -152,9 +152,9 @@ def test_run_pipeline_band_search_patches_best_band(monkeypatch):
     def _search_band(prices, config):
         from corridor_backtest.band_search import search_band as real_search_band
 
-        best_band, results = real_search_band(prices, config)
-        captured["best_band"] = best_band
-        return best_band, results
+        best_params, results = real_search_band(prices, config)
+        captured["best_band"] = best_params
+        return best_params, results
 
     monkeypatch.setattr("corridor_backtest.pipeline.fetch_prices", _fetch)
     monkeypatch.setattr("corridor_backtest.pipeline.search_band", _search_band)
