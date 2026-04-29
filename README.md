@@ -2,7 +2,6 @@
 
 A portfolio backtesting engine focused on corridor rebalancing -- finding the optimal band widths for a given strategy. Supports multi-mode rebalancing, two-band corridor design, mean-variance optimization, 2D band search, and side-by-side strategy comparison.
 
-![Portfolio Backtest Dashboard](assets/dashboard.png)
 ![Summary Dashboard](assets/summary_dashboard.png)
 
 ## Overview
