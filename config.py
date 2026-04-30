@@ -171,7 +171,8 @@ portfolios = [
             "steps": 10,
         },
     },
-    # lev_sector: four-asset leveraged portfolio adding tech-sector concentration via TECL
+    # lev_sector: four-asset leveraged portfolio adding tech-sector concentration via
+    # TECL
     # (3x XLK). Broader equity diversity across market cap and sector, all at 3x. Wider
     # band search range accounts for higher multi-asset drift variance.
     {
