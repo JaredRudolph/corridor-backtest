@@ -76,7 +76,12 @@ def search_band(prices: pd.DataFrame, config: dict) -> tuple[dict, pd.DataFrame]
                     "rebalance": {**config["rebalance"], "band": b, "corridor": c},
                 }
                 records.append(
-                    {"band": b, "corridor": c, "metric": metric_name, "score": _score(candidate_cfg)}
+                    {
+                        "band": b,
+                        "corridor": c,
+                        "metric": metric_name,
+                        "score": _score(candidate_cfg),
+                    }
                 )
 
         search_results = (
@@ -85,7 +90,10 @@ def search_band(prices: pd.DataFrame, config: dict) -> tuple[dict, pd.DataFrame]
             .reset_index(drop=True)
         )
         best = search_results.iloc[0]
-        return {"band": float(best["band"]), "corridor": float(best["corridor"])}, search_results
+        return {
+            "band": float(best["band"]),
+            "corridor": float(best["corridor"]),
+        }, search_results
 
     else:
         lo, hi = band_cfg["band_range"]
@@ -95,8 +103,13 @@ def search_band(prices: pd.DataFrame, config: dict) -> tuple[dict, pd.DataFrame]
 
         records = []
         for val in candidates:
-            candidate_cfg = {**config, "rebalance": {**config["rebalance"], search_key: val}}
-            records.append({"band": val, "metric": metric_name, "score": _score(candidate_cfg)})
+            candidate_cfg = {
+                **config,
+                "rebalance": {**config["rebalance"], search_key: val},
+            }
+            records.append(
+                {"band": val, "metric": metric_name, "score": _score(candidate_cfg)}
+            )
 
         search_results = (
             pd.DataFrame(records)
