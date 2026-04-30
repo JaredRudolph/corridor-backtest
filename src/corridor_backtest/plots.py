@@ -399,7 +399,9 @@ def plot_band_search_curves(
     if color_map is None:
         color_map = _build_color_map(names)
 
-    entries_1d = [e for e in entries if "corridor" not in e["band_search_results"].columns]
+    entries_1d = [
+        e for e in entries if "corridor" not in e["band_search_results"].columns
+    ]
     entries_2d = [e for e in entries if "corridor" in e["band_search_results"].columns]
 
     if not entries_2d or fig is None or gs_slot is None:
@@ -460,7 +462,8 @@ def plot_band_search_curves(
             )
         ax_1d.set_title(
             f"Band Search: {metric_1d.capitalize()} vs Band Width",
-            color=TEXT, fontsize=9,
+            color=TEXT,
+            fontsize=9,
         )
         ax_1d.set_xlabel("Band Width", fontsize=8)
         ax_1d.set_ylabel(metric_1d.capitalize(), fontsize=8)
@@ -478,14 +481,22 @@ def plot_band_search_curves(
 
         pivot = df.pivot_table(index="corridor", columns="band", values="score")
         ax_hm.pcolormesh(
-            pivot.columns, pivot.index, pivot.values,
-            cmap="plasma", shading="auto",
+            pivot.columns,
+            pivot.index,
+            pivot.values,
+            cmap="plasma",
+            shading="auto",
         )
 
         best = df.loc[df["score"].idxmax()]
         ax_hm.scatter(
-            [best["band"]], [best["corridor"]],
-            color="white", s=50, marker="*", zorder=5, linewidths=0.5,
+            [best["band"]],
+            [best["corridor"]],
+            color="white",
+            s=50,
+            marker="*",
+            zorder=5,
+            linewidths=0.5,
         )
         ax_hm.annotate(
             f"b={best['band']:.2f}\nc={best['corridor']:.2f}",
@@ -533,14 +544,24 @@ def plot_weight_corridors(
     threshold_type = config["rebalance"]["threshold_type"]
 
     # derive tickers from weight columns so this works for any portfolio
-    tickers = [c.replace("_weight", "") for c in results.columns if c.endswith("_weight")]
+    tickers = [
+        c.replace("_weight", "") for c in results.columns if c.endswith("_weight")
+    ]
 
     asset_palette = [
-        "#f0c040", "#58a6ff", "#3fb950", "#ffa657",
-        "#d2a8ff", "#f78166", "#79c0ff", "#56d364",
+        "#f0c040",
+        "#58a6ff",
+        "#3fb950",
+        "#ffa657",
+        "#d2a8ff",
+        "#f78166",
+        "#79c0ff",
+        "#56d364",
     ]
     if color_map is None:
-        color_map = {t: asset_palette[i % len(asset_palette)] for i, t in enumerate(tickers)}
+        color_map = {
+            t: asset_palette[i % len(asset_palette)] for i, t in enumerate(tickers)
+        }
 
     n = len(tickers)
     if axes is None:
@@ -589,21 +610,43 @@ def plot_weight_corridors(
             c_hi = target_series + corridor
 
         ax.plot(weights.index, weights.values, color=color, linewidth=0.8, label=ticker)
-        ax.plot(target_series.index, target_series.values, color=color,
-                linewidth=0.6, linestyle="--", alpha=0.6)
+        ax.plot(
+            target_series.index,
+            target_series.values,
+            color=color,
+            linewidth=0.6,
+            linestyle="--",
+            alpha=0.6,
+        )
         # inner rebalancing band: shaded fill + dashed boundary
         ax.fill_between(weights.index, lo, hi, color=color, alpha=0.12)
-        ax.plot(lo.index, lo.values, color=color, linewidth=0.6, linestyle="--", alpha=0.5)
-        ax.plot(hi.index, hi.values, color=color, linewidth=0.6, linestyle="--", alpha=0.5)
+        ax.plot(
+            lo.index, lo.values, color=color, linewidth=0.6, linestyle="--", alpha=0.5
+        )
+        ax.plot(
+            hi.index, hi.values, color=color, linewidth=0.6, linestyle="--", alpha=0.5
+        )
         if corridor != band:
             # trigger zone: lightly shaded region between inner band and outer corridor
             ax.fill_between(weights.index, c_lo, lo, color=color, alpha=0.05)
             ax.fill_between(weights.index, hi, c_hi, color=color, alpha=0.05)
             # outer corridor boundary
-            ax.plot(c_lo.index, c_lo.values, color=color, linewidth=0.8,
-                    linestyle=":", alpha=0.55)
-            ax.plot(c_hi.index, c_hi.values, color=color, linewidth=0.8,
-                    linestyle=":", alpha=0.55)
+            ax.plot(
+                c_lo.index,
+                c_lo.values,
+                color=color,
+                linewidth=0.8,
+                linestyle=":",
+                alpha=0.55,
+            )
+            ax.plot(
+                c_hi.index,
+                c_hi.values,
+                color=color,
+                linewidth=0.8,
+                linestyle=":",
+                alpha=0.55,
+            )
 
         if not rebalance_log.empty:
             for date in rebalance_log.index:
@@ -611,8 +654,14 @@ def plot_weight_corridors(
 
         ax.set_ylabel(ticker, fontsize=8)
         ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:.0%}"))
-        ax.legend(fontsize=7, loc="upper right", framealpha=0.2,
-                  facecolor=AXES_BG, edgecolor=BORDER, labelcolor=TEXT)
+        ax.legend(
+            fontsize=7,
+            loc="upper right",
+            framealpha=0.2,
+            facecolor=AXES_BG,
+            edgecolor=BORDER,
+            labelcolor=TEXT,
+        )
 
     axes[0].set_title(f"Weight Corridors: {entry['name']}")
 
@@ -734,11 +783,13 @@ def plot_corridor_dashboard(
     Returns:
         The assembled Figure.
     """
-    _BAND_HEIGHT = 2.5       # inches for band search panel
+    _BAND_HEIGHT = 2.5  # inches for band search panel
     _TABLE_ROW_HEIGHT = 0.45  # inches per row in summary table (header + data rows)
-    _SUBPLOT_HEIGHT = 2.5    # inches per asset subplot
-    _OUTER_HSPACE = 0.22     # vertical gap between outer rows as fraction of avg row height
-    _INNER_HSPACE = 0.08     # vertical gap between asset subplots within a section
+    _SUBPLOT_HEIGHT = 2.5  # inches per asset subplot
+    _OUTER_HSPACE = (
+        0.22  # vertical gap between outer rows as fraction of avg row height
+    )
+    _INNER_HSPACE = 0.08  # vertical gap between asset subplots within a section
     _TOP = 0.95
     _BOTTOM = 0.02
 
@@ -746,8 +797,7 @@ def plot_corridor_dashboard(
 
     corridor_modes = {"corridor", "hybrid"}
     corridor_entries = [
-        e for e in portfolio_data
-        if e["config"]["rebalance"]["mode"] in corridor_modes
+        e for e in portfolio_data if e["config"]["rebalance"]["mode"] in corridor_modes
     ]
 
     ticker_counts = [len(e["config"]["tickers"]) for e in corridor_entries]
@@ -805,17 +855,27 @@ def plot_corridor_dashboard(
         years = (pv.index[-1] - pv.index[0]).days / 365.25
         p_cagr = (pv.iloc[-1] / pv.iloc[0]) ** (1 / years) - 1
         std = daily_ret.std()
-        p_sharpe = float(daily_ret.mean() / std * np.sqrt(252)) if std > 0 else float("nan")
+        p_sharpe = (
+            float(daily_ret.mean() / std * np.sqrt(252)) if std > 0 else float("nan")
+        )
         peak = pv.cummax()
         p_maxdd = float(((pv - peak) / peak).min())
         ann_vol = std * np.sqrt(252)
         row_labels.append(entry["name"])
-        cell_text.append([
-            f"{p_cagr:.1%}", f"{p_sharpe:.2f}", f"{p_maxdd:.1%}", f"{ann_vol:.1%}",
-        ])
+        cell_text.append(
+            [
+                f"{p_cagr:.1%}",
+                f"{p_sharpe:.2f}",
+                f"{p_maxdd:.1%}",
+                f"{ann_vol:.1%}",
+            ]
+        )
 
     tbl = ax_table.table(
-        cellText=cell_text, rowLabels=row_labels, colLabels=col_labels, loc="center",
+        cellText=cell_text,
+        rowLabels=row_labels,
+        colLabels=col_labels,
+        loc="center",
         cellLoc="center",
     )
     tbl.auto_set_font_size(False)
@@ -839,9 +899,13 @@ def plot_corridor_dashboard(
         plot_weight_corridors(entry, axes=axes)
 
     fig.text(
-        0.10, 0.997,
+        0.10,
+        0.997,
         "Corridor Optimization Dashboard",
-        color=TEXT, fontsize=14, fontweight="bold", va="top",
+        color=TEXT,
+        fontsize=14,
+        fontweight="bold",
+        va="top",
     )
 
     if output_path is not None:
