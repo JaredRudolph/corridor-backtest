@@ -62,7 +62,9 @@ def main() -> None:
     corridor_assets_path = str(ASSETS_DIR / "corridor_dashboard.png")
     plot_corridor_dashboard(portfolio_data, output_path=corridor_path)
     plot_corridor_dashboard(portfolio_data, output_path=corridor_assets_path)
-    logger.info(f"Corridor dashboard saved to {corridor_path} and {corridor_assets_path}")
+    logger.info(
+        f"Corridor dashboard saved to {corridor_path} and {corridor_assets_path}"
+    )
 
     logger.info(f"Results saved to {OUTPUT_DIR}")
 
