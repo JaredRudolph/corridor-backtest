@@ -810,11 +810,11 @@ def plot_corridor_dashboard(
     _BAND_HEIGHT = 2.5  # inches for band search panel
     _SUBPLOT_HEIGHT = 2.5  # inches per asset subplot
     _OUTER_HSPACE = (
-        0.22  # vertical gap between outer rows as fraction of avg row height
+        0.12  # vertical gap between outer rows as fraction of avg row height
     )
-    _INNER_HSPACE = 0.08  # vertical gap between asset subplots within a section
-    _TOP = 0.95
-    _BOTTOM = 0.02
+    _INNER_HSPACE = 0.18  # vertical gap between asset subplots within a section
+    _TOP = 0.975
+    _BOTTOM = 0.04
 
     _setup_rcparams()
 
