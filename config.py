@@ -22,6 +22,7 @@ portfolios = [
             "band": 0.15,
             "rebalance_to": "target",
             "schedule": "Q",
+            "transaction_cost_bps": 5,
         },
     },
     {
@@ -44,6 +45,7 @@ portfolios = [
             "band": 0.15,
             "rebalance_to": "target",
             "schedule": "Q",
+            "transaction_cost_bps": 5,
         },
     },
     # --- Group 2: leveraged risk parity ---
@@ -71,12 +73,15 @@ portfolios = [
             "corridor": 0.15,
             "rebalance_to": "band_edge",
             "schedule": "Q",
+            "transaction_cost_bps": 10,
         },
         "band_search": {
             "metric": "calmar",
             "band_range": [0.02, 0.20],
             "corridor_range": [0.04, 0.25],
             "steps": 10,
+            "train_frac": 0.7,
+            "robustness_threshold": 0.95,
         },
     },
     # --- Group 3: conservative, regime-balanced ---
@@ -103,6 +108,7 @@ portfolios = [
             "band": 0.05,
             "rebalance_to": "target",
             "schedule": "Q",
+            "transaction_cost_bps": 5,
         },
     },
     # --- Group 5: leveraged ETF corridor strategies (band_edge) ---
@@ -131,12 +137,15 @@ portfolios = [
             "corridor": 0.15,
             "rebalance_to": "band_edge",
             "schedule": "Q",
+            "transaction_cost_bps": 10,
         },
         "band_search": {
             "metric": "calmar",
             "band_range": [0.02, 0.20],
             "corridor_range": [0.04, 0.25],
             "steps": 10,
+            "train_frac": 0.7,
+            "robustness_threshold": 0.95,
         },
     },
     # hfea_blended: HFEA variant splitting the bond leg equally between TYD (3x 7-10yr)
@@ -163,12 +172,15 @@ portfolios = [
             "corridor": 0.15,
             "rebalance_to": "band_edge",
             "schedule": "Q",
+            "transaction_cost_bps": 10,
         },
         "band_search": {
             "metric": "calmar",
             "band_range": [0.02, 0.20],
             "corridor_range": [0.04, 0.25],
             "steps": 10,
+            "train_frac": 0.7,
+            "robustness_threshold": 0.95,
         },
     },
     # lev_sector: four-asset leveraged portfolio adding tech-sector concentration via
@@ -196,12 +208,15 @@ portfolios = [
             "corridor": 0.16,
             "rebalance_to": "band_edge",
             "schedule": "Q",
+            "transaction_cost_bps": 10,
         },
         "band_search": {
             "metric": "calmar",
             "band_range": [0.02, 0.20],
             "corridor_range": [0.04, 0.28],
             "steps": 10,
+            "train_frac": 0.7,
+            "robustness_threshold": 0.95,
         },
     },
     # --- Group 4: optimized corridor ---
@@ -228,6 +243,7 @@ portfolios = [
             "band": 0.10,
             "rebalance_to": "target",
             "schedule": "Q",
+            "transaction_cost_bps": 5,
         },
         "optimize": {
             "objective": "max_sharpe",
@@ -243,6 +259,8 @@ portfolios = [
             "metric": "sharpe",
             "band_range": [0.02, 0.25],
             "steps": 20,
+            "train_frac": 0.7,
+            "robustness_threshold": 0.95,
         },
     },
 ]
