@@ -207,9 +207,10 @@ def test_apply_rebalance_to_target():
     current = np.array([0.70, 0.30])
     portfolio_value = 1000.0
 
-    shares = apply_rebalance(portfolio_value, targets, prices, current, cfg)
+    shares, cost = apply_rebalance(portfolio_value, targets, prices, current, cfg)
 
-    # Expected: $600 in A @ $100 = 6 shares, $400 in B @ $50 = 8 shares
+    # No transaction cost configured -- cost should be zero and shares exact.
+    assert cost == 0.0
     np.testing.assert_allclose(shares, [6.0, 8.0])
 
 
@@ -221,8 +222,8 @@ def test_apply_rebalance_to_band_edge_clips_breached():
     current = np.array([0.60, 0.40])
     portfolio_value = 1000.0
 
-    shares = apply_rebalance(portfolio_value, targets, prices, current, cfg)
-    final_weights = shares * prices.values / portfolio_value
+    shares, cost = apply_rebalance(portfolio_value, targets, prices, current, cfg)
+    final_weights = shares * prices.values / (portfolio_value - cost)
 
     # A clipped to 0.55, B clipped to 0.45; renormalized they stay 0.55/0.45
     np.testing.assert_allclose(final_weights.sum(), 1.0)
@@ -238,8 +239,8 @@ def test_apply_rebalance_to_band_edge_leaves_within_unchanged():
     current = np.array([0.52, 0.48])
     portfolio_value = 1000.0
 
-    shares = apply_rebalance(portfolio_value, targets, prices, current, cfg)
-    final_weights = shares * prices.values / portfolio_value
+    shares, cost = apply_rebalance(portfolio_value, targets, prices, current, cfg)
+    final_weights = shares * prices.values / (portfolio_value - cost)
 
     np.testing.assert_allclose(final_weights, current, atol=1e-10)
 
