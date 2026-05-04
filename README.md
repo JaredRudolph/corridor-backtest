@@ -8,13 +8,14 @@ A portfolio backtesting engine focused on corridor rebalancing -- finding the op
 
 ## Overview
 
-corridor-backtest simulates realistic portfolio behavior over historical price data. The core question it answers: given a portfolio's volatility and asset mix, what corridor configuration maximizes risk-adjusted performance? Each portfolio is independently configured with its own tickers, target weights, rebalancing strategy, and optional optimizer. Results are compared side by side across all strategies.
+corridor-backtest simulates portfolio behavior over historical price data. The core question it answers: given a portfolio's volatility and asset mix, what corridor configuration maximizes risk-adjusted performance? Each portfolio is independently configured with its own tickers, target weights, rebalancing strategy, and optional optimizer. Results are compared side by side across all strategies.
 
 **Core features:**
 
 - Corridor, periodic, hybrid, and no-rebalance modes
 - Two-band corridor: separate inner rebalancing band and outer trigger corridor
-- Band search: 1D or 2D parameter search over band/corridor widths scored by Sharpe, CAGR, Calmar, or Sortino
+- Band search: 1D or 2D parameter search with train/test split and robustness region
+- Transaction costs: configurable per-trade bps applied to one-sided turnover at each rebalance
 - Rebalance to target weights or inner band edge (minimize turnover)
 - Mean-variance optimization: max Sharpe, max Sortino, min vol, equal weight
 - Per-asset or lazy global weight bounds fed directly to the optimizer
@@ -42,7 +43,7 @@ corridor-backtest simulates realistic portfolio behavior over historical price d
 
 **Hybrid mode** -- corridor conditions are evaluated every trading day, but rebalancing only executes on a calendar schedule (monthly or quarterly) if a breach has occurred since the last rebalance. This gates corridor responsiveness behind a schedule, reducing turnover on high-volatility assets that would otherwise trigger constantly.
 
-**Band search** -- a parameter sweep that runs a full backtest for each candidate band width and scores it by a chosen metric. The best-scoring configuration is reported. A 2D search sweeps `(band, corridor)` pairs jointly across all valid combinations where `corridor > band`.
+**Band search** -- a parameter sweep that runs a full backtest for each candidate band width and scores it by a chosen metric. To avoid in-sample overfitting, the search runs on a configurable training window (default: first 70% of dates) and the best parameters are evaluated on the held-out test period. A robustness region identifies all candidates within a threshold of the best score (default: 95%), distinguishing a stable plateau from a sharp local optimum. A 2D search sweeps `(band, corridor)` pairs jointly across all valid combinations where `corridor > band`.
 
 **Smart contribution** -- periodic cash is directed entirely to the most underweight asset rather than split pro-rata across all holdings. Uses the contribution itself as a low-friction rebalancing tool without incurring sell-side transaction costs.
 
@@ -84,7 +85,7 @@ The 2D band search finds the optimal `(band, corridor)` pair jointly, scored by 
 
 The summary dashboard has three sections:
 
-**Band search panel (top):** 1D portfolios show score vs band width curves. 2D portfolios show a `plasma` heatmap of score across the `(inner band, corridor)` search space, with the optimal pair marked by a white star.
+**Band search panel (top):** 1D portfolios show score vs band width curves with the robustness region shaded. 2D portfolios show a `plasma` heatmap of score across the `(inner band, corridor)` search space; the optimal pair is marked by a white star and a dashed contour marks the robustness boundary.
 
 **Weight corridor plots:** One block per corridor/hybrid portfolio, one subplot per asset. Each subplot shows:
 - Asset weight over time (solid line)
@@ -130,6 +131,14 @@ Eight strategies across four themes:
 |---|---|---|
 | `global_sharpe` | SPY/QQQ/EFA/EEM/TLT | corridor + rolling max-Sharpe optimizer + 1D band search |
 
+## Assumptions and Limitations
+
+- **Transaction costs** are modelled as a flat basis-point rate on one-sided turnover at each rebalance. This captures spread cost but not market impact or slippage. Liquid ETFs (SPY, TLT, GLD) use 5 bps; leveraged ETFs (UPRO, TMF, TECL) use 10 bps.
+- **Band search is in-sample on the training window only.** Parameters are selected on the first 70% of dates and evaluated on the remaining 30%. Results on the test period reflect genuine out-of-sample performance given the chosen parameters, but do not account for the risk that a different train/test split would select different parameters.
+- **Risk-free rate is set to 0.0** across all portfolios. This overstates Sharpe and Sortino ratios for the 2022-2024 period when the Fed Funds rate was above 4%. Configurable per portfolio via `risk_free_rate`.
+- **Backtest period starts 2015**, limited by leveraged ETF inception dates. Pre-GFC stress regimes (2008-2009) are not represented.
+- **No rebalancing at exact prices.** Trades execute at daily adjusted close with no bid-ask crossing or partial fill modelling.
+
 ## Quickstart
 
 ```bash
@@ -167,6 +176,7 @@ portfolios = [
             "corridor": 0.15,             # outer trigger half-width (omit for single-band)
             "rebalance_to": "band_edge",  # target | band_edge
             "schedule": "Q",
+            "transaction_cost_bps": 10,   # round-trip cost on one-sided turnover
         },
         "optimize": {                     # omit to use fixed weights
             "objective": "max_sharpe",    # max_sharpe | max_sortino | min_vol | equal_weight
@@ -177,6 +187,8 @@ portfolios = [
             "band_range": [0.02, 0.20],   # inner band search range
             "corridor_range": [0.04, 0.25], # outer corridor search range (enables 2D search)
             "steps": 10,                  # candidates per dimension (10 -> up to 100 pairs)
+            "train_frac": 0.7,            # fraction of dates used for search; rest is test
+            "robustness_threshold": 0.95, # candidates within this fraction of best are robust
         },
     },
 ]
