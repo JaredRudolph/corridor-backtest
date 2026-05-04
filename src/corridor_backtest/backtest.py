@@ -171,6 +171,7 @@ def run_backtest(
     last_contribution = prices.index[0]
     last_opt_update = prices.index[0]
     breach_since_last = False
+    total_transaction_costs = 0.0
 
     records = []
     rebalance_log = []
@@ -224,15 +225,17 @@ def run_backtest(
                     )
                     last_opt_update = date
 
-            shares = apply_rebalance(
+            shares, cost = apply_rebalance(
                 port_val, targets, price_row, current_weights, rebalance_cfg
             )
-            post_weights = (shares * price_row.values) / port_val
+            total_transaction_costs += cost
+            post_weights = (shares * price_row.values) / (port_val - cost)
 
             rebalance_log.append(
                 {
                     "date": date,
                     "trigger": trigger,
+                    "transaction_cost": cost,
                     **{f"{t}_pre": pre_weights[i] for i, t in enumerate(tickers)},
                     **{f"{t}_post": post_weights[i] for i, t in enumerate(tickers)},
                 }
@@ -253,6 +256,7 @@ def run_backtest(
         )
 
     results = pd.DataFrame(records).set_index("date")
+    results.attrs["total_transaction_costs"] = total_transaction_costs
     log = (
         pd.DataFrame(rebalance_log).set_index("date")
         if rebalance_log
