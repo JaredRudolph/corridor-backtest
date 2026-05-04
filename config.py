@@ -77,8 +77,8 @@ portfolios = [
         },
         "band_search": {
             "metric": "calmar",
-            "band_range": [0.02, 0.20],
-            "corridor_range": [0.04, 0.25],
+            "band_range": [0.02, 0.10],
+            "corridor_range": [0.04, 0.15],
             "steps": 10,
             "train_frac": 0.7,
             "robustness_threshold": 0.95,
@@ -141,8 +141,8 @@ portfolios = [
         },
         "band_search": {
             "metric": "calmar",
-            "band_range": [0.02, 0.20],
-            "corridor_range": [0.04, 0.25],
+            "band_range": [0.02, 0.10],
+            "corridor_range": [0.04, 0.15],
             "steps": 10,
             "train_frac": 0.7,
             "robustness_threshold": 0.95,
@@ -176,8 +176,8 @@ portfolios = [
         },
         "band_search": {
             "metric": "calmar",
-            "band_range": [0.02, 0.20],
-            "corridor_range": [0.04, 0.25],
+            "band_range": [0.02, 0.10],
+            "corridor_range": [0.04, 0.15],
             "steps": 10,
             "train_frac": 0.7,
             "robustness_threshold": 0.95,
@@ -212,8 +212,8 @@ portfolios = [
         },
         "band_search": {
             "metric": "calmar",
-            "band_range": [0.02, 0.20],
-            "corridor_range": [0.04, 0.28],
+            "band_range": [0.02, 0.10],
+            "corridor_range": [0.04, 0.15],
             "steps": 10,
             "train_frac": 0.7,
             "robustness_threshold": 0.95,
@@ -257,7 +257,7 @@ portfolios = [
         },
         "band_search": {
             "metric": "sharpe",
-            "band_range": [0.02, 0.25],
+            "band_range": [0.02, 0.10],
             "steps": 20,
             "train_frac": 0.7,
             "robustness_threshold": 0.95,
