@@ -719,7 +719,12 @@ def plot_weight_corridors(
     outer = reb.get("corridor")
     if outer is not None:
         band_str += f" / outer {outer:.0%}"
-    parts = [reb["mode"], reb["threshold_type"], band_str, f"to {reb.get('rebalance_to', 'target')}"]
+    parts = [
+        reb["mode"],
+        reb["threshold_type"],
+        band_str,
+        f"to {reb.get('rebalance_to', 'target')}",
+    ]
     if reb["mode"] == "hybrid" and reb.get("schedule"):
         parts.append(reb["schedule"])
     config_desc = "  |  ".join(parts)
