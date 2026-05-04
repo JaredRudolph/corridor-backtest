@@ -119,6 +119,7 @@ def summarize(
         "rebalance_freq_per_year": rebalance_count / years
         if years > 0
         else float("nan"),
+        "transaction_costs": results.attrs.get("total_transaction_costs", 0.0),
         "initial_capital": config["initial_capital"],
         "total_contributions": total_contributions,
         "total_invested": config["initial_capital"] + total_contributions,
