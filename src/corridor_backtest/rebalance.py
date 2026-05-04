@@ -131,8 +131,13 @@ def apply_rebalance(
     prices: pd.Series,
     current_weights: np.ndarray,
     rebalance_cfg: dict,
-) -> np.ndarray:
-    """Compute share counts after a rebalance event.
+) -> tuple[np.ndarray, float]:
+    """Compute share counts after a rebalance event, net of transaction costs.
+
+    Transaction cost is modelled as a flat round-trip rate applied to
+    one-sided turnover: cost = portfolio_value * turnover * cost_bps / 10_000.
+    The cost is deducted from portfolio value before shares are allocated, so
+    it flows through naturally to all downstream metrics.
 
     Args:
         portfolio_value: Total portfolio value in dollars.
@@ -142,7 +147,9 @@ def apply_rebalance(
         rebalance_cfg: The 'rebalance' sub-dict from config.
 
     Returns:
-        Share counts as a 1-D array aligned to prices.index order.
+        Tuple of (shares, cost_dollars) where shares is a 1-D array of share
+        counts aligned to prices.index order and cost_dollars is the dollar
+        value consumed by transaction costs on this rebalance.
 
     Raises:
         ValueError: If rebalance_to is not recognized.
@@ -167,5 +174,10 @@ def apply_rebalance(
             f"Unknown rebalance_to '{rebalance_to}'. Use 'target' or 'band_edge'."
         )
 
-    dollar_allocations = final_weights * portfolio_value
-    return dollar_allocations / prices.values
+    cost_bps = rebalance_cfg.get("transaction_cost_bps", 0.0)
+    one_sided_turnover = float(np.sum(np.abs(final_weights - current_weights)) / 2)
+    cost_dollars = portfolio_value * one_sided_turnover * cost_bps / 10_000
+
+    net_value = portfolio_value - cost_dollars
+    dollar_allocations = final_weights * net_value
+    return dollar_allocations / prices.values, cost_dollars
