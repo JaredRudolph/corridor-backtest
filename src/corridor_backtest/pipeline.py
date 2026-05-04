@@ -4,7 +4,7 @@ from loguru import logger
 from corridor_backtest.backtest import run_backtest
 from corridor_backtest.band_search import search_band
 from corridor_backtest.data import fetch_prices
-from corridor_backtest.metrics import cagr, max_drawdown, sharpe, sortino, summarize
+from corridor_backtest.metrics import cagr, max_drawdown, sharpe, summarize
 
 
 def run_pipeline(
@@ -64,9 +64,7 @@ def run_pipeline(
                     f"({train_frac:.0%} of data)"
                 )
 
-            logger.info(
-                f"[{name}] Running band search ({band_cfg['metric']})..."
-            )
+            logger.info(f"[{name}] Running band search ({band_cfg['metric']})...")
             best_params, band_search_results = search_band(search_prices, config)
             params_str = ", ".join(f"{k}={v:.4f}" for k, v in best_params.items())
             logger.info(
@@ -84,12 +82,22 @@ def run_pipeline(
             rfr = config.get("risk_free_rate", 0.0)
             train_pv = pv[pv.index <= train_end_date]
             test_pv = pv[pv.index > train_end_date]
-            summary["train_cagr"] = cagr(train_pv) if len(train_pv) > 1 else float("nan")
-            summary["train_sharpe"] = sharpe(train_pv, rfr) if len(train_pv) > 1 else float("nan")
-            summary["train_max_drawdown"] = max_drawdown(train_pv) if len(train_pv) > 1 else float("nan")
+            summary["train_cagr"] = (
+                cagr(train_pv) if len(train_pv) > 1 else float("nan")
+            )
+            summary["train_sharpe"] = (
+                sharpe(train_pv, rfr) if len(train_pv) > 1 else float("nan")
+            )
+            summary["train_max_drawdown"] = (
+                max_drawdown(train_pv) if len(train_pv) > 1 else float("nan")
+            )
             summary["test_cagr"] = cagr(test_pv) if len(test_pv) > 1 else float("nan")
-            summary["test_sharpe"] = sharpe(test_pv, rfr) if len(test_pv) > 1 else float("nan")
-            summary["test_max_drawdown"] = max_drawdown(test_pv) if len(test_pv) > 1 else float("nan")
+            summary["test_sharpe"] = (
+                sharpe(test_pv, rfr) if len(test_pv) > 1 else float("nan")
+            )
+            summary["test_max_drawdown"] = (
+                max_drawdown(test_pv) if len(test_pv) > 1 else float("nan")
+            )
 
         summaries.append(summary)
         portfolio_data.append(
@@ -115,7 +123,8 @@ def run_pipeline(
             v_cagr = summary.get("test_cagr", float("nan"))
             logger.info(
                 f"[{name}] Train/test -- "
-                f"Sharpe: {t_sharpe:.2f} / {v_sharpe:.2f} (gap {t_sharpe - v_sharpe:+.2f}) | "
+                f"Sharpe: {t_sharpe:.2f} / {v_sharpe:.2f} "
+                f"(gap {t_sharpe - v_sharpe:+.2f}) | "
                 f"CAGR: {t_cagr:.2%} / {v_cagr:.2%} (gap {t_cagr - v_cagr:+.2%})"
             )
 
